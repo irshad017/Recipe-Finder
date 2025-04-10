@@ -30,7 +30,7 @@ function App() {
         const loadingToast = toast.loading('Uploading and processing audio...');
 
         try {
-          const response = await fetch('http://localhost:5000/upload-audio', {
+          const response = await fetch('https://recipe-backend-tcrn.onrender.com/upload-audio', {
             method: 'POST',
             body: formData,
           });
