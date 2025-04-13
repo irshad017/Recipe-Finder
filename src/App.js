@@ -4,16 +4,12 @@ import toast, { Toaster } from 'react-hot-toast';
 function App() {
   // This holds the recorder so we can start/stop recording later.
   const mediaRecorderRef = useRef(null);
-
   // State to keep track if we're recording
   const [isRecording, setIsRecording] = useState(false);
-
   // Holds the transcription text from the server
   const [transcription, setTranscription] = useState('');
-
   // Holds the recipe matched by the server
   const [matchedRecipe, setMatchedRecipe] = useState(null);
-
   // Ref to play the recorded audio
   const audioPlayerRef = useRef(null);
 
@@ -48,13 +44,17 @@ function App() {
 
         const formData = new FormData();
         formData.append('audio', audioBlob, 'audio.webm');
-        console.log("FormData:",formData)
+        console.log("FormData:", formData);
 
         const loadingToast = toast.loading('Uploading and processing audio...');
         console.log("⏳ Uploading audio to server...");
 
         try {
-          const response = await fetch('https://recipe-backend-tcrn.onrender.com/upload-audio', {
+          // const response = await fetch('https://recipe-backend-tcrn.onrender.com//upload-audio', {
+          //   method: 'POST',
+          //   body: formData,
+          // });
+          const response = await fetch('http://localhost:5000/upload-audio', {
             method: 'POST',
             body: formData,
           });
@@ -63,7 +63,6 @@ function App() {
           const data = await response.json();
           console.log("📩 Server responded:", data);
 
-          // Show toast based on response status
           if (response.status === 200) {
             toast.success(data.message || 'Recipe matched successfully!');
           } else if (response.status === 400) {
@@ -118,43 +117,113 @@ function App() {
   console.log("🧪 mediaRecorderRef:", mediaRecorderRef);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-blue-400 to-indigo-600 text-white p-6">
-      <Toaster position="top-right" reverseOrder={false} />
 
-      <div className="text-center space-y-6">
-        <h1 className="text-3xl font-bold mb-4">🎙️ Voice to Recipe Finder</h1>
+  <div className="min-h-screen bg-gradient-to-br from-blue-400 to-indigo-600 text-white px-4 py-8 flex flex-col items-center">
+  <Toaster position="top-right" reverseOrder={false} />
 
-        <button
-          onClick={isRecording ? stopRecording : startRecording}
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-full text-lg transition duration-300 ease-in-out transform hover:scale-105"
-        >
-          {isRecording ? 'Stop Recording' : 'Start Recording'}
-        </button>
+  <div className="w-full max-w-md space-y-6">
+    <h1 className="text-3xl font-extrabold text-center">🎙️ Voice to Recipe Finder</h1>
 
-        {/* Transcription output */}
-        {transcription && (
-          <div className="bg-white text-gray-900 p-4 rounded-lg shadow-lg max-w-xl mx-auto mt-6">
-            <h3 className="text-xl font-semibold mb-2">📝 Transcription:</h3>
-            <p className="text-lg">{transcription}</p>
-          </div>
+    {/* Start/Stop Recording Button */}
+    <div className="flex justify-center">
+      <button
+        onClick={isRecording ? stopRecording : startRecording}
+        className={`${
+          isRecording ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'
+        } text-white font-bold py-2 px-6 rounded-full text-lg shadow-md transition-transform transform hover:scale-105`}
+      >
+        {isRecording ? 'Stop Recording' : 'Start Recording'}
+      </button>
+    </div>
+
+    {/* Audio Player */}
+    <audio ref={audioPlayerRef} controls className="w-full mt-4 rounded-md" />
+
+    {/* Transcription Output */}
+    {transcription && (
+      <div className="bg-white text-gray-900 p-4 rounded-2xl shadow-lg">
+        <h3 className="text-xl font-semibold mb-2">📝 Transcription</h3>
+        <p className="text-base">{transcription}</p>
+      </div>
+    )}
+
+    {/* Recipe Match Output */}
+    {matchedRecipe && (
+      <div className="bg-white text-gray-900 rounded-2xl overflow-hidden shadow-xl">
+        {/* Image */}
+        <div className="w-full h-48 bg-gray-200">
+          {matchedRecipe.Image_Name ? (
+            <img 
+              src="/phone.jpg" 
+              alt="Recipe" 
+              className="w-full h-full object-cover"
+            />
+        ) : (
+            <div className="flex items-center justify-center h-full text-gray-500">No Image</div>
         )}
+        </div>
+    
+        <div className="p-4 space-y-4">
+          {/* Title */}
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">{matchedRecipe.title}</h2>
+            {matchedRecipe.Image_Name && (
+              <a
+                target="_blank"
+                rel="noopener noreferrer"
+                href={`https://www.google.com/search?hl=en&tbm=isch&q=${encodeURIComponent(
+                  matchedRecipe.Image_Name
+                )}`}
+                className="text-blue-600 text-sm underline"
+              >
+                View Image
+              </a>
+            )}
+          </div>
 
-        {/* Recipe match output */}
-        {matchedRecipe && (
-          <div className="bg-white text-gray-800 p-4 rounded-lg shadow-lg max-w-xl mx-auto mt-4">
-            <h3 className="text-xl font-semibold mb-2">🍽️ Closest Recipe Match:</h3>
-            <ul className="text-left space-y-1">
-              {Object.entries(matchedRecipe).map(([key, value]) => (
-                <li key={key}><strong>{key}:</strong> {value}</li>
-              ))}
+          {/* Nutrition */}
+          <div>
+            <h3 className="text-lg font-semibold mb-1">🧪 Nutrition Info</h3>
+            <ul className="text-sm space-y-1">
+              <li>🔥 Calories: {matchedRecipe.calories}kcal</li>
+              <li>🥩 Protein: {matchedRecipe.protein}g</li>
+              <li>🧈 Fat: {matchedRecipe.fat}g</li>
+              <li>🧂 Sodium: {matchedRecipe.sodium}mg</li>
             </ul>
           </div>
-        )}
 
-        {/* Audio player to listen to your recorded voice */}
-        <audio ref={audioPlayerRef} controls className="mt-4" />
+          {/* Ingredients */}
+          <div>
+            <h3 className="text-lg font-semibold mb-1">🍽️ Ingredients</h3>
+            <ul className="list-disc list-inside text-sm space-y-1">
+              {JSON.parse(matchedRecipe.Cleaned_Ingredients.replace(/'/g, '"')).map(
+                (ingredient, index) => (
+                  <li key={index}>{ingredient}</li>
+                )
+              )}
+            </ul>
+          </div>
+
+          {/* Instructions */}
+          <div>
+            <h3 className="text-lg font-semibold mb-1">👨‍🍳 Instructions</h3>
+            <ol className="list-decimal list-inside text-sm space-y-1">
+              {matchedRecipe.Instructions.split(/\.\s+|\n/).map((step, index) => {
+                const trimmed = step.trim();
+                return trimmed && <li key={index}>{trimmed}.</li>;
+              })}
+            </ol>
+          </div>
+
+          
+        </div>
       </div>
-    </div>
+    )}
+
+    
+  </div>
+</div>
+
   );
 }
 
