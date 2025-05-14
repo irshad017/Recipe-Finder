@@ -9,6 +9,8 @@ function App() {
   const [transcription, setTranscription] = useState('');
   const [matchedRecipe, setMatchedRecipe] = useState(null);
 
+  const [inputSummary, setInputSummary] = useState('');
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -45,9 +47,10 @@ function App() {
           if (response.status === 200) {
             const inputValues = data.input_values || {};
             const formattedValues = Object.entries(inputValues)
-              .map(([key, val]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${val}`)
-              .join(', ');
-
+            .map(([key, val]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${val}`)
+            .join(', ');
+            // console.log("OUT", formattedValues)
+            setInputSummary(formattedValues);
             toast.success(`✅ Recipe matched!\n🍽️ Input Values: ${formattedValues}`);
           } else {
             toast.error(data.message || data.error || 'Could not match recipe.');
@@ -105,15 +108,27 @@ function App() {
         <h1 className="text-3xl sm:text-4xl font-extrabold text-center">🎙️ Voice to Recipe Finder</h1>
 
         {/* Info Box */}
-        <div className="bg-white/20 backdrop-blur-md text-white p-4 sm:p-6 rounded-xl shadow-lg flex flex-col sm:flex-row sm:items-start gap-3 border border-white/30">
-          <div>
-            <h2 className="font-semibold text-lg">🎤 Try Saying:</h2>
-            <p className="text-sm ">
-              <span className="font-medium sm:text-base text-xs">"10 calories, 12 protein, 5 fat, and 20 sodium"</span>
-              <br />to get matching recipes based on your voice input!
-            </p>
+        <div className="w-full max-w-2xl mx-auto bg-white/10 backdrop-blur-lg border border-white/30 text-white p-4 sm:p-6 rounded-2xl shadow-2xl transition-all duration-300">
+          <div className="flex items-start gap-4 sm:gap-6">
+            {/* <div className="text-3xl sm:text-4xl">🎤</div> */}
+            <div className="flex-1">
+              <h2 className="font-semibold text-xl sm:text-2xl mb-1">Try Saying:</h2>
+              <p className="text-sm sm:text-base leading-relaxed">
+                <span className="font-medium">"10 protein, 12 fat, 5 calories, and 20 sodium"</span>
+                <span>, to get matching recipes based on your voice input.</span>
+                <br className="hidden sm:block" />
+                <span className="text-gray-200 text-xs sm:text-sm italic">
+                  ( If any input is blank, it will default to 10)
+                </span>
+                <br />
+                <span className="text-gray-300 text-xs sm:text-sm italic">
+                  * Due to limited data in the recipe database, results are based on the closest match, not an exact nutritional match.
+                </span>
+              </p>
+            </div>
           </div>
         </div>
+
 
         {/* Start/Stop Button */}
         <div className="flex justify-center">
@@ -129,6 +144,15 @@ function App() {
 
         {/* Audio Player */}
         <audio ref={audioPlayerRef} controls className="w-full mt-4 rounded-md" />
+
+        {inputSummary && (
+          <div className="w-full max-w-xl mx-auto mt-4 px-4 py-3 bg-white/10 backdrop-blur-md border border-white/30 text-white text-sm sm:text-base rounded-xl shadow-lg transition-all duration-300">
+            <p className="whitespace-pre-line leading-relaxed text-center">
+              <strong>🎯 Input Values:</strong> {inputSummary}
+            </p>
+          </div>
+        )}
+
 
         {/* Transcription Output */}
         {transcription && (
@@ -173,9 +197,9 @@ function App() {
               <div>
                 <h3 className="text-lg font-semibold mb-1">🧪 Nutrition Info</h3>
                 <ul className="text-sm space-y-1">
-                  <li>🔥 Calories: {matchedRecipe.calories} kcal</li>
                   <li>🥩 Protein: {matchedRecipe.protein} g</li>
                   <li>🧈 Fat: {matchedRecipe.fat} g</li>
+                  <li>🔥 Calories: {matchedRecipe.calories} kcal</li>
                   <li>🧂 Sodium: {matchedRecipe.sodium} mg</li>
                 </ul>
               </div>
